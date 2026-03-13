@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.2
+- Fixed LocalVisualOverride not applying to non-admin players
+
 ## 0.5.1
 - Final validation build
 - Replaced dynamic custom cycle helper with strongly typed `TOD_Time`
