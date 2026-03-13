@@ -114,9 +114,9 @@ oxide.grant group moderator daynightweathercontroller.adminoverride
   },
   "TimeControl": {
     "Mode (1=DAY, 2=NIGHT, 3=CUSTOM, 4=VANILLA)": 1,
-    "DayLengthMinutes (Custom Only)": 55,
+    "DayLengthMinutes (Custom Only)": 115,
     "NightLengthMinutes (Custom Only)": 5,
-    "LockedHour (DAY/NIGHT Only, Recommended Day=12.0, Night=0.0)": 12.0
+    "LockedHour (DAY/NIGHT Only, Recommended Day=12.0, Night=0.0)": 13.0
   },
   "WeatherControl": {
     "Mode (Clear, Overcast, Rain, Storm, Fog, Vanilla)": "Clear"
