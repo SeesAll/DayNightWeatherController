@@ -52,13 +52,13 @@ namespace Oxide.Plugins
             public int Mode = 1;
 
             [JsonProperty(PropertyName = "DayLengthMinutes (Custom Only)")]
-            public int DayLengthMinutes = 55;
+            public int DayLengthMinutes = 115;
 
             [JsonProperty(PropertyName = "NightLengthMinutes (Custom Only)")]
             public int NightLengthMinutes = 5;
 
             [JsonProperty(PropertyName = "LockedHour (DAY/NIGHT Only, Recommended Day=12.0, Night=0.0)")]
-            public float LockedHour = 12f;
+            public float LockedHour = 13f;
         }
 
         private class WeatherControlSettings
