@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("DayNightWeatherController", "SeesAll", "0.5.1")]
+    [Info("DayNightWeatherController", "SeesAll", "0.5.2")]
     [Description("Controls day/night cycles and weather with smart runtime strategies.")]
     public class DayNightWeatherController : RustPlugin
     {
@@ -52,13 +52,13 @@ namespace Oxide.Plugins
             public int Mode = 1;
 
             [JsonProperty(PropertyName = "DayLengthMinutes (Custom Only)")]
-            public int DayLengthMinutes = 115;
+            public int DayLengthMinutes = 55;
 
             [JsonProperty(PropertyName = "NightLengthMinutes (Custom Only)")]
             public int NightLengthMinutes = 5;
 
             [JsonProperty(PropertyName = "LockedHour (DAY/NIGHT Only, Recommended Day=12.0, Night=0.0)")]
-            public float LockedHour = 13f;
+            public float LockedHour = 12f;
         }
 
         private class WeatherControlSettings
@@ -394,12 +394,34 @@ namespace Oxide.Plugins
                 ResetLocalTime(player);
         }
 
+        private void SendAdminTimeCommand(BasePlayer player, float hour)
+        {
+            if (player == null || !player.IsConnected)
+                return;
+
+            bool wasAdmin = player.IsAdmin;
+
+            if (!wasAdmin)
+            {
+                player.SetPlayerFlag(BasePlayer.PlayerFlags.IsAdmin, true);
+                player.SendNetworkUpdateImmediate();
+            }
+
+            player.SendConsoleCommand("admintime", hour);
+
+            if (!wasAdmin)
+            {
+                player.SetPlayerFlag(BasePlayer.PlayerFlags.IsAdmin, false);
+                player.SendNetworkUpdateImmediate();
+            }
+        }
+
         private void ApplyConfiguredLocalTime(BasePlayer player)
         {
             if (player == null || !player.IsConnected)
                 return;
 
-            player.SendConsoleCommand("admintime", GetTargetLockedHour());
+            SendAdminTimeCommand(player, GetTargetLockedHour());
         }
 
         private void ResetLocalTime(BasePlayer player)
@@ -407,7 +429,7 @@ namespace Oxide.Plugins
             if (player == null || !player.IsConnected)
                 return;
 
-            player.SendConsoleCommand("admintime", -1);
+            SendAdminTimeCommand(player, -1f);
         }
 
         private void StartWorldControlTimer()
@@ -539,7 +561,7 @@ namespace Oxide.Plugins
             if (!RequireAdminOverrideAccess(player))
                 return;
 
-            player.SendConsoleCommand("admintime", 12f);
+            SendAdminTimeCommand(player, 12f);
         }
 
         [ChatCommand("night")]
@@ -548,7 +570,7 @@ namespace Oxide.Plugins
             if (!RequireAdminOverrideAccess(player))
                 return;
 
-            player.SendConsoleCommand("admintime", 0f);
+            SendAdminTimeCommand(player, 0f);
         }
 
         [ChatCommand("time")]
@@ -570,7 +592,7 @@ namespace Oxide.Plugins
                 return;
             }
 
-            player.SendConsoleCommand("admintime", hour);
+            SendAdminTimeCommand(player, hour);
         }
 
         [ChatCommand("realtime")]
