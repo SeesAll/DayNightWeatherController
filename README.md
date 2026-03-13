@@ -213,7 +213,7 @@ Rust uses a 24-hour floating time system.
   },
   "TimeControl": {
     "Mode (1=DAY, 2=NIGHT, 3=CUSTOM, 4=VANILLA)": 1,
-    "DayLengthMinutes (Custom Only)": 55,
+    "DayLengthMinutes (Custom Only)": 115,
     "NightLengthMinutes (Custom Only)": 5,
     "LockedHour (DAY/NIGHT Only, Recommended Day=12.0, Night=0.0)": 12.0
   },
@@ -234,7 +234,7 @@ Rust uses a 24-hour floating time system.
   },
   "TimeControl": {
     "Mode (1=DAY, 2=NIGHT, 3=CUSTOM, 4=VANILLA)": 1,
-    "DayLengthMinutes (Custom Only)": 55,
+    "DayLengthMinutes (Custom Only)": 115,
     "NightLengthMinutes (Custom Only)": 5,
     "LockedHour (DAY/NIGHT Only, Recommended Day=12.0, Night=0.0)": 12.0
   },
@@ -255,7 +255,7 @@ Rust uses a 24-hour floating time system.
   },
   "TimeControl": {
     "Mode (1=DAY, 2=NIGHT, 3=CUSTOM, 4=VANILLA)": 3,
-    "DayLengthMinutes (Custom Only)": 55,
+    "DayLengthMinutes (Custom Only)": 115,
     "NightLengthMinutes (Custom Only)": 5,
     "LockedHour (DAY/NIGHT Only, Recommended Day=12.0, Night=0.0)": 12.0
   },
@@ -276,7 +276,7 @@ Rust uses a 24-hour floating time system.
   },
   "TimeControl": {
     "Mode (1=DAY, 2=NIGHT, 3=CUSTOM, 4=VANILLA)": 1,
-    "DayLengthMinutes (Custom Only)": 55,
+    "DayLengthMinutes (Custom Only)": 115,
     "NightLengthMinutes (Custom Only)": 5,
     "LockedHour (DAY/NIGHT Only, Recommended Day=12.0, Night=0.0)": 12.0
   },
@@ -297,7 +297,7 @@ Rust uses a 24-hour floating time system.
   },
   "TimeControl": {
     "Mode (1=DAY, 2=NIGHT, 3=CUSTOM, 4=VANILLA)": 4,
-    "DayLengthMinutes (Custom Only)": 55,
+    "DayLengthMinutes (Custom Only)": 115,
     "NightLengthMinutes (Custom Only)": 5,
     "LockedHour (DAY/NIGHT Only, Recommended Day=12.0, Night=0.0)": 12.0
   },
