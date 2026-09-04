@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0
+- Removed `/day`, `/night`, `/time`, `/realtime`, and `/resettime` because the September 2026 Rust update blocks server plugins from invoking the client-only `admintime` command
+- Removed the nonfunctional `LocalVisualOverride` runtime strategy
+- Changed configured DAY and NIGHT modes to use reliable server-wide world control
+- Retained CUSTOM cycle control, VANILLA passthrough, weather control, config migration, and `/envstatus`
+- Documented supported client-side F1 commands and keybinds for private admin visibility while spectating
+- Updated weather presets to Rust's current `RainHeavy` and `RainMild` names; legacy `Rain` configs migrate to `RainHeavy`
+
+## 0.5.3
+- Attempted compatibility fixes for local admin time commands after the September 2026 Rust update; client-side testing confirmed Rust now rejects server-triggered `admintime`
+- Added invariant hour formatting and command confirmation messages during compatibility testing
+
 ## 0.5.2
 - Fixed LocalVisualOverride not applying to non-admin players
 

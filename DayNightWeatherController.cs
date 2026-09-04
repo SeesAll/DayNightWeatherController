@@ -5,12 +5,12 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("DayNightWeatherController", "SeesAll", "0.5.2")]
+    [Info("DayNightWeatherController", "SeesAll", "0.6.0")]
     [Description("Controls day/night cycles and weather with smart runtime strategies.")]
     public class DayNightWeatherController : RustPlugin
     {
         private PluginConfig config;
-        private RuntimeStrategy runtimeStrategy = RuntimeStrategy.LocalVisualOverride;
+        private RuntimeStrategy runtimeStrategy = RuntimeStrategy.TrueWorldControl;
         private Timer worldControlTimer;
         private Timer weatherVerifyTimer;
 
@@ -20,7 +20,6 @@ namespace Oxide.Plugins
 
         private enum RuntimeStrategy
         {
-            LocalVisualOverride,
             TrueWorldControl,
             NoControl
         }
@@ -63,7 +62,7 @@ namespace Oxide.Plugins
 
         private class WeatherControlSettings
         {
-            [JsonProperty(PropertyName = "Mode (Clear, Overcast, Rain, Storm, Fog, Vanilla)")]
+            [JsonProperty(PropertyName = "Mode (Clear, Overcast, RainHeavy, RainMild, Storm, Fog, Vanilla)")]
             public string Mode = "Clear";
         }
 
@@ -139,9 +138,10 @@ namespace Oxide.Plugins
             if (weather != null)
             {
                 migrated.WeatherControl.Mode =
+                    GetString(weather, "Mode (Clear, Overcast, RainHeavy, RainMild, Storm, Fog, Vanilla)",
                     GetString(weather, "Mode (Clear, Overcast, Rain, Storm, Fog, Vanilla)",
                     GetString(weather, "Mode (Clear, Rain, Storm, Fog, Overcast, Vanilla)",
-                    GetString(weather, "Mode", migrated.WeatherControl.Mode)));
+                    GetString(weather, "Mode", migrated.WeatherControl.Mode))));
             }
 
             var permissionsMap = GetMap(raw, "Permissions");
@@ -187,7 +187,9 @@ namespace Oxide.Plugins
 
             if (mode.Equals("clear", StringComparison.OrdinalIgnoreCase)) return "Clear";
             if (mode.Equals("overcast", StringComparison.OrdinalIgnoreCase)) return "Overcast";
-            if (mode.Equals("rain", StringComparison.OrdinalIgnoreCase)) return "Rain";
+            if (mode.Equals("rain", StringComparison.OrdinalIgnoreCase)) return "RainHeavy";
+            if (mode.Equals("rainheavy", StringComparison.OrdinalIgnoreCase)) return "RainHeavy";
+            if (mode.Equals("rainmild", StringComparison.OrdinalIgnoreCase)) return "RainMild";
             if (mode.Equals("storm", StringComparison.OrdinalIgnoreCase)) return "Storm";
             if (mode.Equals("fog", StringComparison.OrdinalIgnoreCase)) return "Fog";
             if (mode.Equals("vanilla", StringComparison.OrdinalIgnoreCase)) return "Vanilla";
@@ -266,17 +268,6 @@ namespace Oxide.Plugins
             return !string.Equals(config.WeatherControl.Mode, "Vanilla", StringComparison.OrdinalIgnoreCase);
         }
 
-        private bool IsSafeVisualWeather()
-        {
-            return string.Equals(config.WeatherControl.Mode, "Clear", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(config.WeatherControl.Mode, "Overcast", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private float GetTargetLockedHour()
-        {
-            return config.TimeControl.Mode == 2 ? 0f : config.TimeControl.LockedHour;
-        }
-
         private bool HasValidSky()
         {
             return TOD_Sky.Instance != null && TOD_Sky.Instance.Components != null && TOD_Sky.Instance.Components.Time != null;
@@ -292,9 +283,6 @@ namespace Oxide.Plugins
         private void OnServerInitialized()
         {
             ResolveRuntimeStrategy();
-
-            if (runtimeStrategy == RuntimeStrategy.LocalVisualOverride)
-                ApplyLocalOverrideToAllActivePlayers();
 
             if (runtimeStrategy == RuntimeStrategy.TrueWorldControl)
             {
@@ -316,37 +304,10 @@ namespace Oxide.Plugins
             worldControlTimer?.Destroy();
             weatherVerifyTimer?.Destroy();
 
-            if (runtimeStrategy == RuntimeStrategy.LocalVisualOverride)
-                ResetAllLocalOverrides();
-
             RestoreVanillaTimeProgression();
 
             if (IsForcedWeather())
                 ConsoleSystem.Run(ConsoleSystem.Option.Server, "weather.reset");
-        }
-
-        private void OnPlayerConnected(BasePlayer player)
-        {
-            if (runtimeStrategy != RuntimeStrategy.LocalVisualOverride || player == null)
-                return;
-
-            timer.Once(1f, () =>
-            {
-                if (player != null && player.IsConnected)
-                    ApplyConfiguredLocalTime(player);
-            });
-        }
-
-        private void OnPlayerRespawned(BasePlayer player)
-        {
-            if (runtimeStrategy != RuntimeStrategy.LocalVisualOverride || player == null)
-                return;
-
-            timer.Once(1f, () =>
-            {
-                if (player != null && player.IsConnected)
-                    ApplyConfiguredLocalTime(player);
-            });
         }
 
         private void ResolveRuntimeStrategy()
@@ -356,12 +317,6 @@ namespace Oxide.Plugins
             if (!config.EnvironmentControl.Enabled)
             {
                 runtimeStrategy = RuntimeStrategy.NoControl;
-                return;
-            }
-
-            if ((config.TimeControl.Mode == 1 || config.TimeControl.Mode == 2) && IsSafeVisualWeather())
-            {
-                runtimeStrategy = RuntimeStrategy.LocalVisualOverride;
                 return;
             }
 
@@ -380,56 +335,6 @@ namespace Oxide.Plugins
             Puts($"Strategy: {runtimeStrategy}");
             Puts($"Time Mode: {GetTimeModeName(config.TimeControl.Mode)}");
             Puts($"Weather Mode: {config.WeatherControl.Mode}");
-        }
-
-        private void ApplyLocalOverrideToAllActivePlayers()
-        {
-            foreach (var player in BasePlayer.activePlayerList)
-                ApplyConfiguredLocalTime(player);
-        }
-
-        private void ResetAllLocalOverrides()
-        {
-            foreach (var player in BasePlayer.activePlayerList)
-                ResetLocalTime(player);
-        }
-
-        private void SendAdminTimeCommand(BasePlayer player, float hour)
-        {
-            if (player == null || !player.IsConnected)
-                return;
-
-            bool wasAdmin = player.IsAdmin;
-
-            if (!wasAdmin)
-            {
-                player.SetPlayerFlag(BasePlayer.PlayerFlags.IsAdmin, true);
-                player.SendNetworkUpdateImmediate();
-            }
-
-            player.SendConsoleCommand("admintime", hour);
-
-            if (!wasAdmin)
-            {
-                player.SetPlayerFlag(BasePlayer.PlayerFlags.IsAdmin, false);
-                player.SendNetworkUpdateImmediate();
-            }
-        }
-
-        private void ApplyConfiguredLocalTime(BasePlayer player)
-        {
-            if (player == null || !player.IsConnected)
-                return;
-
-            SendAdminTimeCommand(player, GetTargetLockedHour());
-        }
-
-        private void ResetLocalTime(BasePlayer player)
-        {
-            if (player == null || !player.IsConnected)
-                return;
-
-            SendAdminTimeCommand(player, -1f);
         }
 
         private void StartWorldControlTimer()
@@ -553,64 +458,6 @@ namespace Oxide.Plugins
 
             SendReply(player, "You do not have permission to use this command.");
             return false;
-        }
-
-        [ChatCommand("day")]
-        private void CmdDay(BasePlayer player, string command, string[] args)
-        {
-            if (!RequireAdminOverrideAccess(player))
-                return;
-
-            SendAdminTimeCommand(player, 12f);
-        }
-
-        [ChatCommand("night")]
-        private void CmdNight(BasePlayer player, string command, string[] args)
-        {
-            if (!RequireAdminOverrideAccess(player))
-                return;
-
-            SendAdminTimeCommand(player, 0f);
-        }
-
-        [ChatCommand("time")]
-        private void CmdTime(BasePlayer player, string command, string[] args)
-        {
-            if (!RequireAdminOverrideAccess(player))
-                return;
-
-            if (args == null || args.Length < 1)
-            {
-                SendReply(player, "Usage: /time <0-24>");
-                return;
-            }
-
-            float hour;
-            if (!float.TryParse(args[0], out hour) || hour < 0f || hour > 24f)
-            {
-                SendReply(player, "Hour must be a number between 0 and 24.");
-                return;
-            }
-
-            SendAdminTimeCommand(player, hour);
-        }
-
-        [ChatCommand("realtime")]
-        private void CmdRealtime(BasePlayer player, string command, string[] args)
-        {
-            if (!RequireAdminOverrideAccess(player))
-                return;
-
-            ResetLocalTime(player);
-        }
-
-        [ChatCommand("resettime")]
-        private void CmdResetTime(BasePlayer player, string command, string[] args)
-        {
-            if (!RequireAdminOverrideAccess(player))
-                return;
-
-            ResetLocalTime(player);
         }
 
         [ChatCommand("envstatus")]
